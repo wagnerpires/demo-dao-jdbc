@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DbException;
@@ -87,5 +90,46 @@ public class SellerDaoJDBC implements SellerDao {
 		seller.setBirthDate(rs.getDate("BIRTHDATE"));
 		seller.setDepartment(dep);
 		return seller;
+	}
+
+	@Override
+	public List<Seller> findByDepartment(Department department) {
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement(
+					"SELECT A.*, B.NAME AS DEPNAME "
+					+ "FROM DESENV.SELLER A, DESENV.DEPARTMENT B "
+					+ "WHERE A.DEPARTMENTID = B.ID "
+					+ "AND A.DEPARTMENTID = ? "
+					+ "ORDER BY A.NAME");
+
+			st.setInt(1, department.getId() );
+			rs = st.executeQuery();
+			
+			List<Seller> list = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+			
+			while (rs.next()) {
+				
+				Department dep = map.get(rs.getInt("DEPARTMENTID"));
+				
+				if (dep == null) {
+					dep = instantiateDepartment(rs);
+					map.put(rs.getInt("DEPARTMENTID"), dep);
+				}
+				
+				Seller seller = instantiateSeller(rs, dep);
+				list.add(seller);
+			}
+			return list;
+					
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 }
