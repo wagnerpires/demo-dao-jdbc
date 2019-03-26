@@ -50,7 +50,7 @@ public class SellerDaoJDBC implements SellerDao {
 			} else {
 				throw new DbException("Unexpected error! No rows affected!");
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
 		} finally {
 			DB.closeStatement(st);
@@ -73,7 +73,7 @@ public class SellerDaoJDBC implements SellerDao {
 
 			st.executeUpdate();
 		}
-		catch (Exception e) {
+		catch (SQLException e) {
 			throw new DbException(e.getMessage());
 		} finally {
 			DB.closeStatement(st);
@@ -82,8 +82,22 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public void deleteById(Integer id) {
-		// TODO Auto-generated method stub
+		PreparedStatement st = null;
+		try {
+			st = conn.prepareStatement("DELETE FROM DESENV.SELLER WHERE ID = ?");
 
+			st.setInt(1, id);
+
+			int rows = st.executeUpdate();
+			if (rows == 0) {
+				throw new DbException("No rows affect! Id not exist!");
+			}
+		}
+		catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		} finally {
+			DB.closeStatement(st);
+		}
 	}
 
 	@Override
